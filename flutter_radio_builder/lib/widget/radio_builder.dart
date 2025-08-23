@@ -1,148 +1,64 @@
 // ignore_for_file: must_be_immutable
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_radio_builder/widget/base_builder.dart';
 
-class RadioBuilder<T> extends StatelessWidget {
+typedef RadioBuilderNotifierType = int?;
+
+class RadioBuilder<T> extends BaseRadioBuilder<T, RadioBuilderNotifierType> {
   RadioBuilder({
     super.key,
-    required this.list,
-    this.builder,
-    this.padding,
-    this.margin,
-    this.scrollEnabled = true,
-    this.scrollDirection = Axis.vertical,
-    this.controller,
-    this.isPrimary,
-    this.defaultTextStyle,
-    this.optionTextBuilder,
-    this.onSelectionChanged,
-    RadioStyle? radioStyle,
-    this.radioIconBuilder,
+    required super.list,
+    super.allowMultiSelection = false,
+    int? selectedIndex,
+    this.radioStyle,
+    super.builder,
+    super.padding,
+    super.margin,
+    super.scrollEnabled = true,
+    super.scrollDirection = Axis.vertical,
+    super.scrollController,
+    super.isPrimary,
+    super.defaultTextStyle,
+    super.optionTextBuilder,
+    super.onSelectionChanged,
+    super.radioIconBuilder,
+  }) : super(
+         selectedItemIndexes: selectedIndex != null ? [selectedIndex] : null,
+       );
+
+  static RadioController<RadioBuilderNotifierType> newController({
+    RadioBuilderNotifierType initialValue,
   }) {
-    this._radioIndexNotifier = ValueNotifier<int?>(null);
-    this.radioStyle = radioStyle ?? RadioStyle();
-
-    if (this.radioStyle.hoverEffect) {
-      this._hoverNotifier = ValueNotifier<int?>(null);
-    }
-  }
-
-  /// radio data
-  final List<T> list;
-
-  /// builder used to create each radio element (custom UI element)
-  final Widget Function(
-    BuildContext context,
-    T item,
-    int index,
-    Widget radio,
-    bool checked,
-  )?
-  builder;
-
-  /// padding
-  final EdgeInsets? padding;
-
-  /// margins
-  final EdgeInsets? margin;
-
-  /// scrollable
-  final bool scrollEnabled;
-
-  /// scroll direction
-  final Axis scrollDirection;
-
-  /// scroll controller
-  final ScrollController? controller;
-
-  /// is primary scroll
-  final bool? isPrimary;
-
-  /// default text style - if builder not implemented
-  final TextStyle? defaultTextStyle;
-
-  /// default options string builder
-  final String? Function(T item, int index)? optionTextBuilder;
-
-  /// value notifier
-  late ValueNotifier<int?> _radioIndexNotifier;
-
-  /// value notifier for hover effect
-  ValueNotifier<int?>? _hoverNotifier;
-
-  /// on changed
-  final void Function(T selectedItem, int index)? onSelectionChanged;
-
-  /// Radio Style
-  late RadioStyle radioStyle;
-
-  /// Custom Radio Icon
-  final Widget Function(bool isChecked)? radioIconBuilder;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      margin: margin,
-      child: ValueListenableBuilder(
-        valueListenable: _radioIndexNotifier,
-        builder: (context, value, child) => ListView.builder(
-          itemBuilder: (context, index) {
-            final radio = _getRadio(index: index);
-            final customElement = builder != null
-                ? builder!(
-                    context,
-                    list[index],
-                    index,
-                    radio,
-                    index == _radioIndexNotifier.value,
-                  )
-                : _defaultWidget(radio: radio, index: index);
-            return _buildHoverEffect(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: () => _onSelectionChanged(index),
-                child: customElement,
-              ),
-              index: index
-            );
-          },
-          itemCount: list.length,
-          shrinkWrap: !scrollEnabled,
-          physics: scrollEnabled ? null : NeverScrollableScrollPhysics(),
-          primary: isPrimary,
-          scrollDirection: scrollDirection,
-          controller: controller,
-        ),
-      ),
+    return RadioController<RadioBuilderNotifierType>(
+      initialValue: initialValue,
     );
   }
 
-  Widget _buildHoverEffect({required Widget child, required int index}) {
-     return MouseRegion(
-        onEnter: (_) => _hoverNotifier?.value = index,
-        onExit: (_) => _hoverNotifier?.value = null,
-        child: _hoverNotifier != null ? ValueListenableBuilder<int?>(
-          valueListenable: _hoverNotifier!,
-          builder: (context, isHovering, _) {
-            return AnimatedScale(
-              scale: _hoverNotifier?.value == index ? radioStyle.hoverEffectFactor : 1.0,
-              duration: const Duration(milliseconds: 200),
-              child: child,
-            );
-          },
-        ) : child,
-      );
+  RadioStyle? radioStyle;
+
+  @override
+  BaseRadioStyle get controlStyle {
+    return radioStyle ?? RadioStyle();
   }
 
-  Widget _getRadio({required int index}) {
-    if(radioIconBuilder != null) {
-      return radioIconBuilder!(_radioIndexNotifier.value == index);
+  @override
+  Widget getRadioWidget({
+    required int index,
+    required bool isChecked,
+    required Function(int? index) onSelectionChanged,
+    required ValueNotifier<RadioBuilderNotifierType?> notifier,
+  }) {
+    final radioStyle = controlStyle as RadioStyle;
+    if (radioIconBuilder != null) {
+      final radioWidget = radioIconBuilder!(isChecked);
+      return radioSemanticLabel != null
+          ? Semantics(label: radioSemanticLabel, child: radioWidget)
+          : radioWidget;
     } else if (radioStyle.isAdaptive) {
-      return Radio.adaptive(
+      final radioWidget = Radio.adaptive(
         value: index,
-        groupValue: _radioIndexNotifier.value,
-        onChanged: _onSelectionChanged,
+        groupValue: notifier.value,
+        onChanged: onSelectionChanged,
         fillColor: radioStyle.fillColor,
         splashRadius: radioStyle.splashRadius,
         focusColor: radioStyle.focusColor,
@@ -156,11 +72,14 @@ class RadioBuilder<T> extends StatelessWidget {
         visualDensity: radioStyle.visualDensity,
         useCupertinoCheckmarkStyle: radioStyle.useCupertinoCheckmarkStyle,
       );
+      return radioSemanticLabel != null
+          ? Semantics(label: radioSemanticLabel, child: radioWidget)
+          : radioWidget;
     } else {
-      return Radio(
+      final radioWidget = Radio(
         value: index,
-        groupValue: _radioIndexNotifier.value,
-        onChanged: _onSelectionChanged,
+        groupValue: notifier.value,
+        onChanged: onSelectionChanged,
         fillColor: radioStyle.fillColor,
         splashRadius: radioStyle.splashRadius,
         focusColor: radioStyle.focusColor,
@@ -173,35 +92,28 @@ class RadioBuilder<T> extends StatelessWidget {
         focusNode: radioStyle.focusNode,
         visualDensity: radioStyle.visualDensity,
       );
+      return radioSemanticLabel != null
+          ? Semantics(label: radioSemanticLabel, child: radioWidget)
+          : radioWidget;
     }
   }
 
-  Widget _defaultWidget({required Widget radio, required int index}) {
-    final option = optionTextBuilder != null
-        ? optionTextBuilder!(list[index], index) ?? ""
-        : "";
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        radio,
-        SizedBox(width: radioStyle.space),
-        Text(option, style: defaultTextStyle),
-      ],
-    );
+  @override
+  RadioController<RadioBuilderNotifierType?> getController() {
+    return RadioBuilder.newController(initialValue: selectedItemIndexes?.first);
   }
 
-  void _onSelectionChanged(int? value) {
-    if (_radioIndexNotifier.value != value) {
-      _radioIndexNotifier.value = value;
-      if (onSelectionChanged != null && value != null) {
-        onSelectionChanged!(list[value], value);
-      }
-    }
+  @override
+  RadioBuilderNotifierType? getNofifierNewValue({
+    required int index,
+    required bool isChecked,
+    required RadioBuilderNotifierType? notifierValue,
+  }) {
+    return index;
   }
 }
 
-class RadioStyle {
+class RadioStyle extends BaseRadioStyle {
   final MouseCursor? mouseCursor;
   final bool toggleable;
   final Color? activeColor;
@@ -215,13 +127,9 @@ class RadioStyle {
   final FocusNode? focusNode;
   final bool autofocus;
   final bool useCupertinoCheckmarkStyle;
-  final bool isAdaptive;
-  final double space;
-  final bool hoverEffect;
-  final double hoverEffectFactor;
 
-  const RadioStyle({
-    this.isAdaptive = false,
+  RadioStyle({
+    super.isAdaptive = false,
     this.mouseCursor,
     this.toggleable = false,
     this.activeColor,
@@ -235,8 +143,8 @@ class RadioStyle {
     this.focusNode,
     this.autofocus = false,
     this.useCupertinoCheckmarkStyle = false,
-    this.space = 0.0,
-    this.hoverEffect = false,
-    this.hoverEffectFactor = 1.1,
+    super.space,
+    super.hoverEffect,
+    super.hoverEffectFactor = 1.1,
   });
 }
