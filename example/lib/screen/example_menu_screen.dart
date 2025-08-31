@@ -2,7 +2,7 @@ import 'package:example/extensions/common_screen.dart';
 import 'package:example/models/menu.dart';
 import 'package:example/screen/custom_checkbox_example_screen.dart';
 import 'package:example/screen/custom_radio_example_screen.dart';
-import 'package:example/screen/sime_radio_example_screen.dart';
+import 'package:example/screen/simple_radio_example_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_radio_builder/flutter_radio_builder.dart';
 
@@ -75,7 +75,7 @@ class ExampleMenuScreen extends StatelessWidget with CommonScreen {
       case 0:
         navigatePage(
           context: context,
-          page: SimeRadioExampleScreen(title: menu.title),
+          page: SimpleRadioExampleScreen(title: menu.title),
         );
         break;
       case 1:

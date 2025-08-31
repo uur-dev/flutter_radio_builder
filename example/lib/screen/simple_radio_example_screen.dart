@@ -2,9 +2,9 @@ import 'package:example/extensions/common_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_radio_builder/flutter_radio_builder.dart';
 
-class SimeRadioExampleScreen extends StatelessWidget with CommonScreen {
+class SimpleRadioExampleScreen extends StatelessWidget with CommonScreen {
   final String title;
-  SimeRadioExampleScreen({super.key, required this.title});
+  SimpleRadioExampleScreen({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {
