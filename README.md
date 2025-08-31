@@ -162,6 +162,7 @@ flutter run -d chrome
 
 ## Demo
 
+![Example Demo](https://radio-builder.uur-dev.com/radio-builder-demo.gif)
 * [Android APK](https://radio-builder.uur-dev.com/radio-builder-example.apk)
 * [Web](https://radio-builder.uur-dev.com/)
 
